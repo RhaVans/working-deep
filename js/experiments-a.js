@@ -20,10 +20,6 @@ function frame({ no, title, line, tag = 'sim', stage, observe, detail, note }) {
 
 const bar = (...kids) => h('div', { class: 'observe', 'aria-live': 'polite' }, ...kids);
 const readout = (label, el, cls = '') => h('span', { class: cls }, label + ' ', el);
-const liveNum = (v = '0') => {
-  const el = h('b', { class: 'live' }, v);
-  return el;
-};
 
 /* =============================================================== 01 · size */
 
@@ -506,10 +502,13 @@ export function exp04() {
   const playBtn = btn('Play', () => toggle(), { icon: true });
   const stepLabel = h('b', null, '0 / 20');
 
+  // References, not lookups: render() runs before this bar is mounted.
+  const firstOut = h('b', { class: 'live' }, '—');
+  const unguardedOut = h('b', { class: 'warn' }, '—');
   const observed = bar(
     readout('step', stepLabel),
-    h('span', null, 'first end-to-end feature at step ', h('b', { class: 'live', id: 'firstFlag' }, '—')),
-    h('span', null, 'live without their check ', h('b', { class: 'warn', id: 'unguarded' }, '—')));
+    h('span', null, 'first end-to-end feature at step ', firstOut),
+    h('span', null, 'live without their check ', unguardedOut));
 
   function currentOrder() { return orderFor(kind, security); }
 
@@ -569,8 +568,8 @@ export function exp04() {
     scrub.max = String(total);
     scrub.value = String(step);
     stepLabel.textContent = `${step} / ${total}`;
-    document.getElementById('firstFlag').textContent = first ? String(first) : '—';
-    document.getElementById('unguarded').textContent = String(unguarded);
+    firstOut.textContent = first ? String(first) : '—';
+    unguardedOut.textContent = String(unguarded);
     flags.replaceChildren(
       h('span', null, 'complete features ', h('b', null, `${completeCols}/5`)),
       h('span', null, 'steps taken ', h('b', null, `${step}`)),
