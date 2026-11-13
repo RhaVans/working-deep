@@ -3,9 +3,10 @@
    roughly seven tenths of the viewport, and the reading material follows. */
 
 @media (max-width: 719px) {
-  /* the router wraps each experiment in a bare div next to the rail */
+  /* the router wraps each experiment as: div > [ rail wrapper (.exp), view (.exp) ] */
   .view > div { display: flex; flex-direction: column; }
-  .view > div > .rail { order: 2; margin-top: 0.55rem; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
+  .view > div > .exp:has(.rail) { order: 2; margin-top: 0.5rem; }
+  .view > div > .exp:has(.rail) .rail { margin-top: 0; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
   .view > div > .exp { order: 1; }
 
   .exp {
@@ -50,7 +51,6 @@
 /* twelve slots do not fit their time labels on a phone */
 @media (max-width: 560px) {
   .slot span:last-child { display: none; }
-  .mode__time { display: none; }
 }
 
 /* the progress view is a record, not a chapter: no stage floor there */
