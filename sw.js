@@ -1,16 +1,17 @@
-/* sw.js — cache the app shell so the manual works offline.
-   Bump CACHE when shipping changes. */
-const CACHE = 'working-deep-v5';
+/* sw.js — offline cache for the lab shell. Bump CACHE on every shipped change. */
+const CACHE = 'working-deep-v6';
 const ASSETS = [
   './',
   './index.html',
   './css/main.css',
   './js/app.js',
   './js/core.js',
-  './js/intro.js',
-  './js/rules-a.js',
-  './js/rules-b.js',
-  './js/templates.js',
+  './js/data.js',
+  './js/explore.js',
+  './js/experiments-a.js',
+  './js/experiments-b.js',
+  './js/workbench.js',
+  './js/progress.js',
 ];
 
 self.addEventListener('install', (e) => {
