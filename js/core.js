@@ -271,13 +271,11 @@ export function every(fn, ms) {
 
 /* --------------------------------------------------------- shared framing */
 
-export function experimentHead({ no, title, line, tag = 'sim', detail, connections }) {
-  const head = h('header', { class: 'exp__head' },
+/* Returns a list so callers can spread it into append(). Only the head is in
+   it: anything else would print "null" into the page. */
+export function experimentHead({ no, title, line, tag = 'sim' }) {
+  return [h('header', { class: 'exp__head' },
     h('p', { class: 'kicker' }, h('b', null, `Experiment ${no}`), tagEl(tag), h('span', null, 'drag · tap · watch')),
     h('h1', { class: 'exp__title' }, title),
-    h('p', { class: 'exp__line' }, line));
-
-  return [head, detail || connections ? more('What this shows · where it comes from',
-    detail ? h('p', null, detail) : null,
-    connections ? h('p', null, connections) : null) : null];
+    h('p', { class: 'exp__line' }, line))];
 }

@@ -3,6 +3,11 @@
    roughly seven tenths of the viewport, and the reading material follows. */
 
 @media (max-width: 719px) {
+  /* the router wraps each experiment in a bare div next to the rail */
+  .view > div { display: flex; flex-direction: column; }
+  .view > div > .rail { order: 2; margin-top: 0.55rem; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
+  .view > div > .exp { order: 1; }
+
   .exp {
     display: flex;
     flex-direction: column;
@@ -25,7 +30,6 @@
 
   .observe { order: 2; }
   .more { order: 3; }
-  .rail { order: 4; margin-top: 0.55rem; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
 
   /* fill the taller stage instead of stacking it all at the top */
   .modes { align-content: space-between; height: 100%; }
@@ -37,6 +41,16 @@
   .belief__scale { padding-bottom: 1.9rem; }
   .rung { min-height: 3.5rem; }
   .park__wrap, .blockrail__wrap { margin-top: auto; }
+
+  /* the map needs slightly larger type to stay legible without zooming */
+  .map .node__label { font-size: 11px; }
+  .map .node__num { font-size: 11px; }
+}
+
+/* twelve slots do not fit their time labels on a phone */
+@media (max-width: 560px) {
+  .slot span:last-child { display: none; }
+  .mode__time { display: none; }
 }
 
 /* the progress view is a record, not a chapter: no stage floor there */
