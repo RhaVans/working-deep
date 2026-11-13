@@ -1,7 +1,8 @@
-/* core.js — DOM helpers, local persistence, motion, and the shared UI pieces.
-   No dependencies. Everything renders with textContent, so content is safe. */
+/* core.js — DOM helpers, persistence, motion, sheet, progress.
+   Same storage key as the previous version: entries made there survive. */
 
 const SVGNS = 'http://www.w3.org/2000/svg';
+const KEY = 'working-deep:v1';
 
 function add(el, children) {
   for (const c of children.flat(Infinity)) {
@@ -17,7 +18,6 @@ export function h(tag, props, ...children) {
       const v = props[k];
       if (v == null || v === false) continue;
       if (k === 'class') el.className = v;
-      else if (k === 'html') el.innerHTML = v;
       else if (k === 'text') el.textContent = v;
       else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
       else if (k === 'data') for (const d in v) el.dataset[d] = v[d];
@@ -45,24 +45,12 @@ export function s(tag, attrs, ...children) {
   return el;
 }
 
-export const p = (text) => h('p', null, text);
-export const chip = (text) => h('span', { class: 'chip' }, text);
+export const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+export const reduced = () =>
+  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function btn(text, onClick, { ghost = false, small = false, pressed, disabled, label, ...rest } = {}) {
-  return h('button', {
-    type: 'button',
-    class: 'btn' + (ghost ? ' btn--ghost' : '') + (small ? ' btn--sm' : ''),
-    onclick: onClick,
-    'aria-pressed': pressed,
-    'aria-label': label,
-    disabled,
-    ...rest,
-  }, text);
-}
+/* ------------------------------------------------------------- persistence */
 
-/* ------------------------------------------------------------ persistence */
-
-const KEY = 'working-deep:v1';
 let cache = read();
 
 function read() {
@@ -79,7 +67,7 @@ function write() {
     localStorage.setItem(KEY, JSON.stringify(cache));
     return true;
   } catch {
-    toast('This browser refused to save. Your entry is kept on screen only.');
+    toast('This browser refused to save — your change is on screen only.');
     return false;
   }
 }
@@ -90,19 +78,17 @@ function emit(key) {
 
 export const store = {
   get(key, fallback) {
-    return key in cache ? cache[key] : fallback;
+    const v = key in cache ? cache[key] : undefined;
+    return v === undefined ? fallback : v;
   },
   set(key, value) {
     cache[key] = value;
-    const ok = write();
+    write();
     emit(key);
-    return ok;
   },
-  all() {
-    return JSON.parse(JSON.stringify(cache));
-  },
+  all() { return JSON.parse(JSON.stringify(cache)); },
   replace(data) {
-    cache = data && typeof data === 'object' ? data : {};
+    cache = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
     write();
     emit('*');
   },
@@ -119,56 +105,23 @@ export function subscribe(fn) {
   return () => removeEventListener('wd:change', handler);
 }
 
-/* ----------------------------------------------------------------- motion */
+/* ---------------------------------------------------------------- progress */
 
-export const reduced = () =>
-  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EMPTY = { explored: [], tried: [], done: [] };
 
-let io = null;
-function observer() {
-  if (io || !('IntersectionObserver' in window)) return io;
-  io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('in');
-          io.unobserve(e.target);
-        }
-      }
-    },
-    { rootMargin: '0px 0px -10% 0px', threshold: 0.05 }
-  );
-  return io;
+export function progress() {
+  const p = store.get('progress', null);
+  const base = { ...EMPTY, ...(p || {}) };
+  for (const k of Object.keys(EMPTY)) if (!Array.isArray(base[k])) base[k] = [];
+  return base;
 }
 
-export function reveal(el, i = 0) {
-  if (!el || el.nodeType !== 1) return el;
-  el.classList.add('reveal');
-  if (i) el.style.setProperty('--d', Math.min(i, 4) * 70 + 'ms');
-  const ob = observer();
-  if (!ob || reduced()) {
-    el.classList.add('in');
-    return el;
+export function mark(kind, id) {
+  const p = progress();
+  if (!p[kind].includes(id)) {
+    p[kind] = [...p[kind], id];
+    store.set('progress', p);
   }
-  ob.observe(el);
-  return el;
-}
-
-export function countTo(el, to, { decimals = 0, suffix = '', ms = 620 } = {}) {
-  const from = Number(el.dataset.v || 0);
-  el.dataset.v = to;
-  if (reduced() || from === to) {
-    el.textContent = to.toFixed(decimals) + suffix;
-    return;
-  }
-  const t0 = performance.now();
-  const step = (now) => {
-    const k = Math.min(1, (now - t0) / ms);
-    const eased = 1 - Math.pow(1 - k, 3);
-    el.textContent = (from + (to - from) * eased).toFixed(decimals) + suffix;
-    if (k < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
 }
 
 /* ------------------------------------------------------------------- toast */
@@ -180,102 +133,65 @@ export function toast(message) {
   el.textContent = message;
   el.classList.add('is-on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('is-on'), 2600);
+  toastTimer = setTimeout(() => el.classList.remove('is-on'), 2500);
 }
 
-/* -------------------------------------------------------------- components */
+/* ------------------------------------------------------------------- sheet */
 
-const TAG_LABEL = { manual: 'From the manual', sim: 'Simulation', read: 'Interpretation' };
+let lastFocus = null;
 
-export function tagEl(kind = 'sim') {
-  return h('span', { class: `tag tag--${kind}` }, TAG_LABEL[kind] || kind);
-}
-
-export function chapter({ id, no, kind = 'Rule', title, lede, removes }) {
-  const body = h('div', { class: 'ch-body' });
-  const root = h(
-    'section',
-    { class: 'chapter', id, 'aria-labelledby': `${id}-title` },
-    h(
-      'div',
-      { class: 'ch-head' },
-      h(
-        'p',
-        { class: 'ch-kicker' },
-        h('span', null, `${kind} ${no}`),
-        removes ? h('span', null, `removes ${removes}`) : null
-      ),
-      h('h2', { class: 'ch-title', id: `${id}-title` }, title),
-      lede ? h('p', { class: 'ch-lede' }, lede) : null
-    ),
-    body
-  );
-  return { root, body };
-}
-
-export function fig({ title, tag = 'sim', caption, stage }) {
-  return h(
-    'figure',
-    { class: 'fig' },
-    h('div', { class: 'fig__head' }, h('span', { class: 'fig__title' }, title), tagEl(tag)),
-    h('div', { class: 'fig__stage' }, stage),
-    caption ? h('figcaption', { class: 'fig__cap' }, caption) : null
-  );
-}
-
-export function note(kind, ...content) {
-  return h('div', { class: 'note' }, tagEl(kind), ...content);
-}
-
-export function takeaway(text) {
-  return h('div', { class: 'takeaway' }, h('h3', null, 'Takeaway'), h('p', null, text));
-}
-
-export function example(title, ...content) {
-  return h('div', { class: 'example' }, h('h3', null, title), ...content);
-}
-
-export function seeAlso(items) {
-  return h(
-    'nav',
-    { class: 'links', 'aria-label': 'Related rules' },
-    h('b', null, 'Connects to'),
-    ...items.map(([label, href]) => h('a', { href: `#${href}` }, label))
-  );
-}
-
-export function quiz({ q, options, answer, why }) {
-  const wrap = h('div', { class: 'quiz' });
-  const opts = h('div', { class: 'quiz__opts' });
-  const exp = h('p', { class: 'quiz__why' });
-  let done = false;
-  options.forEach((label, i) => {
-    const b = h('button', {
-      class: 'quiz__opt',
-      type: 'button',
-      onclick: () => {
-        if (done) return;
-        done = true;
-        const right = i === answer;
-        b.dataset.state = right ? 'right' : 'wrong';
-        if (!right) opts.children[answer].dataset.state = 'right';
-        [...opts.children].forEach((x) => (x.disabled = true));
-        exp.textContent = (right ? 'Correct. ' : 'Not quite. ') + why;
-        exp.classList.add('is-on');
-      },
-    }, label);
-    opts.append(b);
+export function openSheet(title, content) {
+  const sheet = document.getElementById('sheet');
+  const scrim = document.getElementById('scrim');
+  const titleEl = document.getElementById('sheetTitle');
+  const bodyEl = document.getElementById('sheetBody');
+  if (!sheet || !scrim) return;
+  lastFocus = document.activeElement;
+  titleEl.textContent = title;
+  bodyEl.replaceChildren(typeof content === 'function' ? content() : content);
+  scrim.hidden = false;
+  sheet.hidden = false;
+  // next frame so the transform transition has a start value
+  requestAnimationFrame(() => {
+    scrim.classList.add('is-on');
+    sheet.classList.add('is-on');
   });
-  wrap.append(
-    h('p', { class: 'fig__title' }, 'Concept check'),
-    h('p', { class: 'quiz__q' }, q),
-    opts,
-    exp
-  );
-  return wrap;
+  document.getElementById('sheetClose').focus({ preventScroll: true });
 }
 
-/* A labelled control row: segmented buttons that stay in sync. */
+export function closeSheet() {
+  const sheet = document.getElementById('sheet');
+  const scrim = document.getElementById('scrim');
+  if (!sheet || sheet.hidden) return;
+  sheet.classList.remove('is-on');
+  scrim.classList.remove('is-on');
+  setTimeout(() => {
+    sheet.hidden = true;
+    scrim.hidden = true;
+  }, reduced() ? 0 : 340);
+  if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+}
+
+/* ------------------------------------------------------------------ pieces */
+
+export function btn(label, onClick, { ghost = false, small = false, icon = false, pressed, disabled, ariaLabel, ...rest } = {}) {
+  return h('button', {
+    type: 'button',
+    class: 'btn' + (ghost ? ' btn--ghost' : '') + (small ? ' btn--sm' : '') + (icon ? ' btn--icon' : ''),
+    onclick: onClick,
+    'aria-pressed': pressed,
+    'aria-label': ariaLabel,
+    disabled,
+    ...rest,
+  }, label);
+}
+
+export function stat(label, value, { cls = '', live = false } = {}) {
+  return h('div', { class: 'stat ' + cls },
+    h('b', { class: live ? 'num live' : 'num' }, value),
+    h('span', null, label));
+}
+
 export function segmented({ label, options, value, onChange }) {
   const group = h('div', { class: 'seg', role: 'group', 'aria-label': label });
   const buttons = options.map(([val, text]) =>
@@ -286,32 +202,28 @@ export function segmented({ label, options, value, onChange }) {
         buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(options[i][0] === val)));
         onChange(val);
       },
-    }, text)
-  );
+    }, text));
   group.append(...buttons);
   return group;
 }
 
-export function field(label, input, { wide = false } = {}) {
-  // The visible label is the accessible name, so the two can never drift apart.
-  if (input && input.nodeType === 1 && 'labels' in input) input.setAttribute('aria-label', label);
-  return h('label', { class: 'field' + (wide ? ' field--wide' : '') }, h('span', null, label), input);
+export function field(label, input) {
+  if (input && input.nodeType === 1) input.setAttribute('aria-label', label);
+  return h('label', { class: 'field' }, h('span', null, label), input);
 }
 
-export function textInput({ value = '', placeholder = '', ariaLabel, onInput, multiline = false, rows }) {
-  // No placeholder fallback for the name: a wrapping <label> should name the
-  // field, otherwise the visible label and the accessible name disagree.
+export function textInput({ value = '', placeholder = '', ariaLabel, onInput, multiline = false, rows = 2, type = 'text' }) {
   const el = multiline
-    ? h('textarea', { placeholder, 'aria-label': ariaLabel, rows: rows || 3 })
-    : h('input', { type: 'text', placeholder, 'aria-label': ariaLabel });
+    ? h('textarea', { placeholder, 'aria-label': ariaLabel, rows })
+    : h('input', { type, placeholder, 'aria-label': ariaLabel });
   el.value = value;
-  el.addEventListener('input', () => onInput && onInput(el.value));
+  el.addEventListener('input', () => onInput && onInput(el.value, el));
   return el;
 }
 
-export function slider({ label, min = 0, max = 10, value, onChange }) {
+export function slider({ label, min = 0, max = 10, step = 1, value, onChange }) {
   const out = h('output', null, String(value));
-  const input = h('input', { type: 'range', min, max, value, 'aria-label': label });
+  const input = h('input', { type: 'range', min, max, step, value, 'aria-label': label });
   input.addEventListener('input', () => {
     out.textContent = input.value;
     onChange(Number(input.value));
@@ -319,4 +231,53 @@ export function slider({ label, min = 0, max = 10, value, onChange }) {
   return h('div', { class: 'slider' },
     h('label', null, h('span', null, label), out),
     input);
+}
+
+export function tagEl(kind) {
+  const map = { manual: 'From the manual', sim: 'Simulation', read: 'Interpretation' };
+  return h('span', { class: `tag tag--${kind}` }, map[kind] || kind);
+}
+
+export function more(summary, ...content) {
+  return h('details', { class: 'more' },
+    h('summary', null, summary),
+    h('div', { class: 'more__body' }, ...content));
+}
+
+/* ------------------------------------------------------------------ motion */
+
+export function tween(el, to, { ms = 600, decimals = 0, suffix = '' } = {}) {
+  const from = Number(el.dataset.value || 0);
+  el.dataset.value = String(to);
+  if (reduced() || from === to) {
+    el.textContent = to.toFixed(decimals) + suffix;
+    return;
+  }
+  const t0 = performance.now();
+  const step = (now) => {
+    const k = clamp((now - t0) / ms, 0, 1);
+    const eased = 1 - Math.pow(1 - k, 3);
+    el.textContent = (from + (to - from) * eased).toFixed(decimals) + suffix;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* clock for anything that plays: returns a cancel function */
+export function every(fn, ms) {
+  const id = setInterval(fn, ms);
+  return () => clearInterval(id);
+}
+
+/* --------------------------------------------------------- shared framing */
+
+export function experimentHead({ no, title, line, tag = 'sim', detail, connections }) {
+  const head = h('header', { class: 'exp__head' },
+    h('p', { class: 'kicker' }, h('b', null, `Experiment ${no}`), tagEl(tag), h('span', null, 'drag · tap · watch')),
+    h('h1', { class: 'exp__title' }, title),
+    h('p', { class: 'exp__line' }, line));
+
+  return [head, detail || connections ? more('What this shows · where it comes from',
+    detail ? h('p', null, detail) : null,
+    connections ? h('p', null, connections) : null) : null];
 }
