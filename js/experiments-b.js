@@ -50,9 +50,11 @@ export function exp05() {
   const list = h('div', { class: 'srcs' });
   const verdict = h('p', { class: 'small' }, '');
 
+  // A reference, not a lookup: render() runs before this bar is mounted.
+  const sourcesOut = h('b', null, '0');
   const observed = bar(
     readout('confidence', value, 'live'),
-    readout('sources in', h('b', { id: 'nSources' }, '0'), ''),
+    readout('sources in', sourcesOut, ''),
     h('span', null, 'each source moves the pointer less than the one before'));
 
   function persist() {
@@ -75,7 +77,7 @@ export function exp05() {
   function render() {
     belief = compute();
     tween(value, belief, { suffix: '%' });
-    document.getElementById('nSources').textContent = String(on.size);
+    sourcesOut.textContent = String(on.size);
     pointer.style.left = `${display}%`;
     track.setAttribute('aria-valuenow', String(belief));
     state.textContent = stopWords(belief);
@@ -327,7 +329,6 @@ export function exp07() {
   const saved = store.get('parking', null);
   let park = Array.isArray(saved) ? saved : ['check the retry limit in the uploader', 'ask about the invoice format'];
   let projects = 3;
-  let dragIdx = -1;
 
   const svg = s('svg', { class: 'netview', viewBox: '0 0 320 240', role: 'img', 'aria-label': 'Connections between open projects' });
   const cx = 160; const cy = 118; const R = 78;
@@ -380,14 +381,14 @@ export function exp07() {
   }
 
   function renderRail() {
-    rail.replaceChildren(...BLOCK.map((b, i) => h('div', {
+    rail.replaceChildren(...BLOCK.map((b) => h('div', {
       class: 'block' + (b.key === 'focus' ? ' is-focus' : ''),
       style: { flexGrow: String(b.min) },
       'data-k': b.key,
     },
       h('b', null, `${b.min}m`),
-      h('span', null, b.label)),
-      h('div', { class: 'railscale', 'aria-hidden': 'true' }, '0', '55', '110')));
+      h('span', null, b.label))),
+      h('div', { class: 'railscale', 'aria-hidden': 'true' }, '0', '55', '110'));
     const focusShare = Math.round((80 / 110) * 100);
     rail.append(h('p', { class: 'tiny', style: { margin: '0.35rem 0 0' } }, `${focusShare}% of the cycle is the focus block. Setup and wrap-up exist so the next block does not pay for this one.`));
   }
@@ -448,10 +449,14 @@ export function exp08() {
   let rung = 0;
   const trace = h('div', { class: 'trace' });
 
+  // References, not lookups: render() runs before this bar is mounted.
+  const diagOut = h('b', null, 'input drought');
+  const spentOut = h('b', null, '0');
+  const whyOut = h('b', { class: 'ok' }, 'cheapest first');
   const observed = bar(
-    h('span', null, 'diagnosis ', h('b', { id: 'diag' }, 'input drought')),
-    h('span', null, 'minutes spent ', h('b', { id: 'spent' }, '0')),
-    h('span', null, h('b', { class: 'ok', id: 'why' }, 'cheapest first')));
+    h('span', null, 'diagnosis ', diagOut),
+    h('span', null, 'minutes spent ', spentOut),
+    h('span', null, whyOut));
 
   const stage = h('div', { class: 'stage' },
     h('div', { class: 'diag' },
@@ -486,11 +491,9 @@ export function exp08() {
 
     const path = condition === 'drought' ? LADDER.map((r) => r.title) : [LADDER[2].title, LADDER[3].title];
     trace.replaceChildren(...path.map((p, i) => h('span', { class: 'chip' + (i ? ' is-arrow' : '') }, p)));
-    const spentEl = document.getElementById('spent');
-    const whyElT = document.getElementById('why');
-    document.getElementById('diag').textContent = condition === 'drought' ? 'input drought' : 'fatigue';
-    spentEl.textContent = String(spent);
-    whyElT.textContent = condition === 'drought' ? 'cheapest first' : 'skip the input steps';
+    diagOut.textContent = condition === 'drought' ? 'input drought' : 'fatigue';
+    spentOut.textContent = String(spent);
+    whyOut.textContent = condition === 'drought' ? 'cheapest first' : 'skip the input steps';
     if (rung === LADDER.length - 1) mark('done', '08');
   }
 
