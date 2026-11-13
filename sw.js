@@ -1,9 +1,13 @@
 /* sw.js — offline cache for the lab shell. Bump CACHE on every shipped change. */
-const CACHE = 'working-deep-v6';
+const CACHE = 'working-deep-v7';
 const ASSETS = [
   './',
   './index.html',
   './css/main.css',
+  './css/lab.css',
+  './css/tools.css',
+  './css/fixes.css',
+  './css/layout.css',
   './js/app.js',
   './js/core.js',
   './js/data.js',

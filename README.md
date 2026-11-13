@@ -1,109 +1,65 @@
 # Working Deep
 
-An interactive field manual for sustaining complex research and software work.
-Eight rules, three templates, and a visual model for each idea.
+An interactive laboratory for eight principles of sustained deep work. The
+manual's rules, numbers and templates are the source material; the interface
+teaches them by letting you manipulate the mechanism, not by explaining it.
 
-Built from *Working deep, without burning out* (November 2026). No build step,
-no dependencies, no backend, no network calls.
+Live: <https://working-deep.vercel.app/>
+
+## The four experiences
+
+| Hash | What it is |
+| --- | --- |
+| `#explore` | A navigable system map: eight rule nodes, labelled edges, node detail, jump into an experiment. |
+| `#sim/01` … `#sim/08` | One experiment per rule. Each is a model with state, consequences and a visible end condition. |
+| `#bench/a` `b` `c` | The three templates as tools: daily timeline, project kickoff board with trust boundaries and STRIDE threats, research workspace. |
+| `#progress` | What has been seen, tried and finished, plus export/import/print/erase in Data. |
+
+## The eight experiments
+
+1. **Size** — drill a project block down to a next action; a three-check forge scores whether a written action is concrete.
+2. **Continuity** — two focus curves over the same 45 minutes; filling the four breadcrumb lines lifts the second one.
+3. **Modes** — a twelve-slot workday you can reshape; the mixed preset produces the manual's 11 switches, the grouped one 2.
+4. **Slices** — 4 layers x 5 features played back in two orders; the first end-to-end feature arrives at step 16 or step 4, and a security row shows which order leaves features live without a check.
+5. **Belief** — sources with decreasing impact move a confidence reading; the stop rule closes when the reading crosses it.
+6. **Flow** — a draggable point on challenge x skill, with the adaptation that follows from the state.
+7. **Attention** — 1 to 5 active projects and the n(n-1)/2 edges between them, plus the 5/80/5/20 block rail and a parking lot.
+8. **Diagnosis** — input drought versus fatigue, and the four-rung ladder that answers each.
 
 ## Run it
 
 ```bash
-npm start          # → http://localhost:3000
+npm start          # http://localhost:3000
+npm run check      # node --check on every module
 ```
 
-Node 18+ (uses `import.meta.dirname`, Node 20.11+). To use another port:
+No build step, no dependencies, no backend. Plain ES modules, custom SVG, CSS
+transitions. `server.mjs` is a static file server; on Vercel the project serves
+the repository root directly (framework preset "Other", build command empty).
 
-```bash
-PORT=8080 npm start
-```
+Stylesheets are split by surface: `main.css` (shell, forms, map, sheet),
+`lab.css` (experiments 01-04), `tools.css` (workbench, progress, motion, print),
+`fixes.css` (the later screens) and `layout.css` (mobile composition).
 
-Any static file server works, but the modules need `http://`, not `file://`.
-`npm run check` runs a syntax check over every JavaScript file.
+## Data
 
-## Structure
+Everything lives in `localStorage` under `working-deep:v1` — the same key the
+previous text version used, so old entries (belief log, parking lot, template
+fields, threat slices) are read and kept. `Data -> Export` writes one JSON file;
+`Import` accepts it, or an older `working-deep-notes.json`.
 
-```
-index.html          shell, header, footer, the data tools
-css/main.css        design tokens, layout, components, print styles
-js/core.js          DOM helper, local store, motion, shared components
-js/app.js           contents, scroll state, export/import, mounting
-js/intro.js         the opening: project → next action, session map
-js/rules-a.js       Rules 01–04
-js/rules-b.js       Rules 05–08 (exports the belief log used by Template C)
-js/templates.js     Templates A, B, C
-sw.js               offline cache
-server.mjs          the static server behind `npm start`
-```
+## Honesty about the models
 
-## What is interactive
+- **From the manual** — wording, counts and distinctions: 11 vs 2 switches, 16 vs 4, 0/1/3/6/10 pairs, 5 + 80 + 5 + 20, the four-rung ladder and its times.
+- **Simulation** — the decreasing source-impact bars, the two focus curves, the flow bands and the re-entry cost per switch. These are models that encode a claim; they are not measurements.
+- **Interpretation** — the edges on the system map, the flow thresholds, the security-placement rule in experiment 04.
 
-| Section | Interaction |
-| --- | --- |
-| Opening | Decompose a project one level at a time; counts follow the manual's auth example |
-| 01 | Expandable decomposition tree; a four-test validator for your own next action |
-| 02 | Cold-start vs breadcrumb output shapes; a breadcrumb composer that saves |
-| 03 | Build a day from twelve slots; switch count recomputes; 11 vs 2 presets |
-| 04 | Twenty-item construction simulator, layer-by-layer vs slice-by-slice, step/play/scrub |
-| 05 | Belief log (add, edit, delete) shared with Template C; source-impact chart with the stop rule; a rabbit-hole budget |
-| 06 | Challenge and skill sliders with a flow model and advice |
-| 07 | Block anatomy scrubber; 1–5 project switch network; parking lot shared with Template A |
-| 08 | Four-stage diagnostic ladder with input-drought/fatigue recommendation |
-| Templates | Daily rail with per-block mode and next action, spec and STRIDE threat model with clickable arrows and slice plan, question tree, time-box, stop rule, adversarial prompt |
+## Accessibility and performance
 
-Every chapter ends with one concept check that explains the answer.
-
-## Your data
-
-- Stored in this browser under the localStorage key `working-deep:v1`.
-- **Export** writes `working-deep-notes.json`; **Import** restores one.
-- **Erase my entries** in the footer clears everything.
-- Nothing leaves the device. There is no account and no sync.
-
-localStorage was chosen over IndexedDB deliberately: the app stores a few
-kilobytes of text, and the synchronous API removes a whole async layer. If the
-notes ever grow to something like a real document store, move it to IndexedDB.
-
-## Offline
-
-`sw.js` caches the app shell. It is **cache-first**, so bump `CACHE` in `sw.js`
-whenever you ship a change, otherwise returning visitors keep the old files.
-
-## Source fidelity
-
-- `From the manual` — the source's wording, numbers and distinctions.
-- `Simulation` — a model built to make a statement visible. Not measured data.
-- `Interpretation` — added explanation (e.g. the flow-model bands, the five-line
-  breadcrumb reading).
-
-## Testing performed
-
-Run in Chromium against the dev server after a clean cache:
-
-- `node --check` on every module: passes.
-- No console or page errors on load or after interaction.
-- No horizontal overflow at 360, 390, 430, 768 and 1366 px.
-- 10 sections, 16 figures, 8 quizzes, 3 templates render.
-- Interactions verified: intro decompose, tree toggle, next-action validator
-  (3/4 → passes all four), breadcrumb scenario toggle and saved composer,
-  day builder (11 mixed, 2 separated), slice simulator (first path at 16
-  layer-by-layer and 4 slice-by-slice), belief add/edit, source-impact stop
-  rule, flow states (anxiety/flow/boredom), block stage readout, five-project
-  network (10 pairs), diagnostic recommendation, Template B arrow inspection,
-  Template C sub-question status, quiz feedback, contents navigation, export.
-- Persistence after reload: Template A fields and block mode, parking lot
-  (shared with Rule 07), Template B spec and an added slice, breadcrumb,
-  belief log in both Rule 05 and Template C.
-
-Not verified: print output, Firefox and Safari, screen readers, and real
-low-end Android hardware. Pointer interaction on the very long template section
-was verified by dispatching events rather than synthetic clicks, because the
-automation scroll helper deadlocked on the reveal transitions.
-
-## Known limitations
-
-- JavaScript is required: the page renders entirely on the client.
-- The offline worker caches aggressively; bump `CACHE` on release.
-- Print styles exist for the templates but were not visually checked.
-- Rule 06's bands and the Rule 02 minute values are illustrative, and labelled
-  as such in the interface.
+Hash routing, labels on every control, `aria-pressed` on toggles, a dialog-style
+sheet with Escape and scrim dismissal, and a `prefers-reduced-motion` path that
+removes every transition. Mobile is the primary target: 360/390/430 px, no
+horizontal overflow, no hover-only interaction. On phones the visualization
+comes first and the experiment rail sits below it. Animation is limited to state
+changes on short-lived elements; nothing runs continuously except explicit
+playback.
