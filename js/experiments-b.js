@@ -182,12 +182,8 @@ export function exp06() {
   const px = (v) => PAD + (v / 10) * (W - PAD * 2);
   const py = (v) => H - PAD - (v / 10) * (H - PAD * 2);
 
-  const bands = [
-    s('polygon', { class: 'fzone fzone--boredom', points: `${px(0)},${py(0)} ${px(10)},${py(0)} ${px(10)},${py(9)} ${px(0)},${py(10)}` }),
-    s('polygon', { class: 'fzone fzone--flow', points: `${px(0)},${py(0)} ${px(10)},${py(0)} ${px(10)},${py(9)} ${px(0)},${py(10)}` }),
-  ];
-
-  // Draw the flow corridor as a band between chal = skill ± 1.
+  // The corridor is the band between chal = skill ± 1; outside it the two
+  // failure modes open up in opposite directions.
   const flowBand = s('polygon', {
     class: 'fband',
     points: `${px(0)},${py(1)} ${px(9)},${py(10)} ${px(10)},${py(10)} ${px(10)},${py(9)} ${px(1)},${py(0)} ${px(0)},${py(0)}`,
@@ -200,7 +196,6 @@ export function exp06() {
     class: 'fband fband--bor',
     points: `${px(0)},${py(0)} ${px(0)},${py(1)} ${px(9)},${py(10)} ${px(10)},${py(0)}`,
   });
-  bands[0] = borBand; bands[1] = flowBand;
 
   const grid = [];
   for (let i = 0; i <= 10; i += 2) {
@@ -209,9 +204,9 @@ export function exp06() {
   }
 
   const labels = [
-    s('text', { class: 'fzone__label', x: px(1.2), y: py(9.4) }, 'ANXIETY'),
-    s('text', { class: 'fzone__label', x: px(3.4), y: py(4.2) }, 'FLOW'),
-    s('text', { class: 'fzone__label', x: px(7.6), y: py(1.3) }, 'BOREDOM'),
+    s('text', { class: 'fzone__label', x: px(0.9), y: py(9.4) }, 'ANXIETY'),
+    s('text', { class: 'fzone__label', x: px(3.2), y: py(4.2) }, 'FLOW'),
+    s('text', { class: 'fzone__label', x: px(7.4), y: py(1.1) }, 'BOREDOM'),
     s('text', { class: 'fax', x: px(10), y: H - 8, 'text-anchor': 'end' }, 'skill →'),
     s('text', { class: 'fax', x: 8, y: py(10) + 4 }, 'challenge ↑'),
   ];
@@ -227,6 +222,11 @@ export function exp06() {
   const actionEl = h('p', { class: 'flow__fix' }, 'Protect the block.');
   const whyEl = h('p', { class: 'small muted' }, 'Challenge and skill are matched. Change nothing.');
   const adapt = h('div', { class: 'adapt' }, actionEl, whyEl);
+
+  const gapOut = h('b', null, '0');
+  const observed = bar(
+    readout('challenge − skill', gapOut),
+    h('span', null, 'the corridor is a model, not a measured threshold'));
 
   function render() {
     const z = zoneOf(skill, chal);
@@ -244,6 +244,8 @@ export function exp06() {
     stateEl.replaceChildren(h('b', null, z.label), h('span', null, z.key === 'flow' ? 'challenge ≈ skill' : z.key === 'anxiety' ? 'challenge > skill' : 'skill > challenge'));
     actionEl.textContent = z.fix;
     whyEl.textContent = z.why;
+    const gap = Math.round((chal - skill) * 10) / 10;
+    gapOut.textContent = (gap > 0 ? '+' : '') + String(gap);
     mark('tried', '06');
     if (z.key === 'flow') mark('done', '06');
   }
@@ -310,6 +312,7 @@ export function exp06() {
     no: '06', title: 'Drag yourself into flow',
     line: 'One point, two axes. Where it sits decides whether the fix is a smaller task or a harder one.',
     stage,
+    observe: observed,
     detail: 'The manual’s model: too much challenge against skill is anxiety, too little is boredom, and adaptation runs in opposite directions in each. The three zones and the fixes are the manual’s; the coordinates are a diagram, not a psychometric scale.',
   });
 }
@@ -503,6 +506,7 @@ export function exp08() {
     no: '08', title: 'Diagnose before you push',
     line: 'Blocked is not a diagnosis. Two conditions, two paths, and the cheap tests come first.',
     stage,
+    observe: observed,
     detail: 'The manual’s ladder and its timings: 10 minutes explaining, 20 minutes reading, 20 minutes away, then the remainder of the block on a different task. The two conditions are the manual’s distinction between needing input and needing rest; the paths drawn here are this build’s reading of which rungs still apply to each.',
   });
 }
