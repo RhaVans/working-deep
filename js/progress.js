@@ -26,11 +26,18 @@ const ENTRIES = [
   ['templateC', 'research'],
 ];
 
-export function progressView() {
+// The workbench also marks progress under its own keys; the bars count
+// experiments only, so an id that is not one of the eight is ignored.
+const ids = EXERCISES.map(([id]) => id);
+
+function progressView() {
   const p = progress();
-  const total = EXERCISES.length + TOOLS.length + NODES.length;
-  const done = p.done.length + p.tried.length * 0 + p.explored.length;
-  const pct = Math.round((Math.min(total, done) / total) * 100);
+  const explored = p.explored.filter((id) => NODES.some((n) => n.id === id)).length;
+  const tried = p.tried.filter((id) => ids.includes(id)).length;
+  const done = p.done.filter((id) => ids.includes(id)).length;
+  const total = EXERCISES.length * 2 + NODES.length;
+  const touched = explored + done + tried;
+  const pct = Math.round((Math.min(total, touched) / total) * 100);
 
   const root = h('div', { class: 'exp' });
 
@@ -43,11 +50,11 @@ export function progressView() {
       h('div', { class: 'prog' },
         h('div', { class: 'prog__dial' },
           h('b', { class: 'prog__pct' }, `${pct}%`),
-          h('span', null, `${done} of ${total}`)),
+          h('span', null, `${touched} of ${total}`)),
         h('div', { class: 'prog__bars' },
-          bar('explored', p.explored.length, NODES.length),
-          bar('tried', p.tried.length, EXERCISES.length),
-          bar('completed', p.done.length, EXERCISES.length)))),
+          bar('explored', explored, NODES.length),
+          bar('tried', tried, EXERCISES.length),
+          bar('completed', done, EXERCISES.length)))),
     h('div', { class: 'prog__grid' },
       section('Experiments', EXERCISES.map(([id, title, task]) => {
         const isDone = p.done.includes(id);
@@ -93,3 +100,5 @@ function section(title, rows) {
     h('h2', null, title),
     h('div', { class: 'plist' }, ...rows));
 }
+
+export { progressView };

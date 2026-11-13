@@ -10,38 +10,36 @@
 
   .exp__head {
     order: 0;
-    padding: 0.55rem 0 0.5rem;
-    gap: 0.22rem;
+    padding: 0.45rem 0 0.4rem;
+    gap: 0.18rem;
   }
-  .exp__title { font-size: clamp(1.32rem, 1.15rem + 2vw, 1.75rem); }
-  .exp__line { font-size: 0.9rem; line-height: 1.4; }
-  .kicker { font-size: 0.55rem; gap: 0.4rem; }
+  .exp__title { font-size: clamp(1.3rem, 1.15rem + 1.9vw, 1.7rem); }
+  .exp__line { font-size: 0.88rem; line-height: 1.38; }
+  .kicker { font-size: 0.54rem; gap: 0.35rem; }
 
   .stage {
     order: 1;
-    margin-top: 0.6rem;
-    min-height: 68dvh;
+    margin-top: 0.5rem;
+    min-height: 73dvh;
   }
 
   .observe { order: 2; }
   .more { order: 3; }
   .rail { order: 4; margin-top: 0.55rem; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
 
-  /* fill the taller stage instead of stacking it at the top */
+  /* fill the taller stage instead of stacking it all at the top */
   .modes { align-content: space-between; height: 100%; }
-  .slot { height: 8.5rem; }
+  .slot { height: 9rem; }
   .decomp, .ctx, .belief, .diag, .flowview, .netwrap, .sliceview { align-content: start; }
   .slicegrid { align-content: center; }
-  .cell { min-height: 2.4rem; }
+  .cell { min-height: 2.5rem; }
   .dchildren { gap: 0.4rem; }
   .belief__scale { padding-bottom: 1.9rem; }
-  .ladder { align-content: start; }
-  .rung { min-height: 3.4rem; }
-  .netwrap { align-content: start; }
+  .rung { min-height: 3.5rem; }
   .park__wrap, .blockrail__wrap { margin-top: auto; }
 }
 
 /* the progress view is a record, not a chapter: no stage floor there */
 @media (max-width: 719px) {
-  .prog + .stage, .stage:has(.prog) { min-height: 0; }
+  .stage:has(.prog) { min-height: 0; }
 }
