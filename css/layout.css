@@ -4,15 +4,18 @@
 
 @media (max-width: 719px) {
   /* the router wraps each experiment as: div > [ rail wrapper (.exp), view (.exp) ] */
-  .view > div { display: flex; flex-direction: column; }
+  .view > div { display: flex; flex-direction: column; min-width: 0; }
+  .view > div > .exp { order: 1; min-width: 0; width: 100%; }
   .view > div > .exp:has(.rail) { order: 2; margin-top: 0.5rem; }
   .view > div > .exp:has(.rail) .rail { margin-top: 0; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
-  .view > div > .exp { order: 1; }
 
   .exp {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
+
+  .rail { min-width: 0; width: 100%; }
 
   .exp__head {
     order: 0;
