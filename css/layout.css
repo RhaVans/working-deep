@@ -1,0 +1,47 @@
+/* layout.css — mobile composition. The visual is the first thing on screen:
+   the experiment rail moves under it, the header tightens, the stage takes
+   roughly seven tenths of the viewport, and the reading material follows. */
+
+@media (max-width: 719px) {
+  .exp {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .exp__head {
+    order: 0;
+    padding: 0.55rem 0 0.5rem;
+    gap: 0.22rem;
+  }
+  .exp__title { font-size: clamp(1.32rem, 1.15rem + 2vw, 1.75rem); }
+  .exp__line { font-size: 0.9rem; line-height: 1.4; }
+  .kicker { font-size: 0.55rem; gap: 0.4rem; }
+
+  .stage {
+    order: 1;
+    margin-top: 0.6rem;
+    min-height: 68dvh;
+  }
+
+  .observe { order: 2; }
+  .more { order: 3; }
+  .rail { order: 4; margin-top: 0.55rem; border-top: 1px solid var(--rule); border-bottom: 0; padding-top: 0.5rem; }
+
+  /* fill the taller stage instead of stacking it at the top */
+  .modes { align-content: space-between; height: 100%; }
+  .slot { height: 8.5rem; }
+  .decomp, .ctx, .belief, .diag, .flowview, .netwrap, .sliceview { align-content: start; }
+  .slicegrid { align-content: center; }
+  .cell { min-height: 2.4rem; }
+  .dchildren { gap: 0.4rem; }
+  .belief__scale { padding-bottom: 1.9rem; }
+  .ladder { align-content: start; }
+  .rung { min-height: 3.4rem; }
+  .netwrap { align-content: start; }
+  .park__wrap, .blockrail__wrap { margin-top: auto; }
+}
+
+/* the progress view is a record, not a chapter: no stage floor there */
+@media (max-width: 719px) {
+  .prog + .stage, .stage:has(.prog) { min-height: 0; }
+}
