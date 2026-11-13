@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Working Deep — an interactive field manual</title>
+<meta name="description" content="An interactive field guide to sustaining complex research and software work: eight rules, three templates, and visual models you can manipulate.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f7f3ea">
+<link rel="stylesheet" href="css/main.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f7f3ea'/%3E%3Cpath d='M6 22h20M6 16h13M6 10h7' stroke='%234a32b4' stroke-width='2.5'/%3E%3C/svg%3E">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="progress" aria-hidden="true"><i></i></div>
+
+<header class="topbar">
+  <a class="brand" href="#opening">
+    <span class="brand__name">Working Deep</span>
+    <span class="brand__sub">field manual · interactive</span>
+  </a>
+  <div class="topbar__tools">
+    <button class="tool" id="exportBtn" type="button">Export</button>
+    <button class="tool" id="importBtn" type="button">Import</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc" id="toc" aria-label="Contents"></nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+
+<footer class="foot">
+  <div class="foot__inner">
+    <p class="foot__note">
+      <strong>How to read this.</strong> Anything marked <span class="tag tag--manual">From the manual</span>
+      preserves the source's wording, numbers and distinctions. Anything marked
+      <span class="tag tag--sim">Simulation</span> is a model built to make a statement visible — not measured data.
+      Notes marked <span class="tag tag--read">Interpretation</span> are additional explanation, not the manual's.
+    </p>
+    <p class="foot__note foot__note--small">
+      Working deep, without burning out · November 2026 · your entries stay in this browser.
+      <button class="linkbtn" id="printBtn" type="button">Print the templates</button>
+      <button class="linkbtn" id="clearBtn" type="button">Erase my entries</button>
+    </p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

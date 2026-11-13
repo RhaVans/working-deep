@@ -1,0 +1,11 @@
+{
+  "name": "working-deep",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An interactive field manual for sustaining complex research and software work.",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check js/app.js && node --check js/core.js && node --check js/intro.js && node --check js/rules-a.js && node --check js/rules-b.js && node --check js/templates.js && node --check sw.js"
+  }
+}
