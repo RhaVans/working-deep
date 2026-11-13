@@ -501,12 +501,15 @@ export function exp04() {
   const scrub = h('input', { type: 'range', min: 0, max: 20, value: '0', 'aria-label': 'Step through the build' });
   const playBtn = btn('Play', () => toggle(), { icon: true });
   const stepLabel = h('b', null, '0 / 20');
+  const secLabel = h('b', null, '0 / 5');
+  const secRead = readout('security pass · owed', secLabel, 'warn');
 
   // References, not lookups: render() runs before this bar is mounted.
   const firstOut = h('b', { class: 'live' }, '—');
   const unguardedOut = h('b', { class: 'warn' }, '—');
   const observed = bar(
     readout('step', stepLabel),
+    secRead,
     h('span', null, 'first end-to-end feature at step ', firstOut),
     h('span', null, 'live without their check ', unguardedOut));
 
@@ -517,6 +520,11 @@ export function exp04() {
     const total = order.length;
     const taken = order.slice(0, step);
     const built = new Set(taken.map((x) => `${x.row}-${x.col}`));
+    // Security work is not a feature-building step. The denominator stays at the
+    // twenty cells in both orders; the checks get their own counter beside it.
+    const buildTotal = ROWS.length * COLS.length;
+    const coreTaken = taken.filter((x) => x.row !== 'sec').length;
+    const secTaken = taken.filter((x) => x.row === 'sec').length;
     // Slice order ships the check with the data cell, so no feature is ever
     // live without it. Layer order leaves that window open until the end.
     if (kind === 'sliced' && security) {
@@ -567,12 +575,18 @@ export function exp04() {
 
     scrub.max = String(total);
     scrub.value = String(step);
-    stepLabel.textContent = `${step} / ${total}`;
+    stepLabel.textContent = `${coreTaken} / ${buildTotal}`;
+    secLabel.textContent = `${secTaken} / ${COLS.length}`;
+    // In layer order the checks are a separate pass at the end; with slices they
+    // arrive inside the slice, so there is nothing extra to count.
+    const secShown = security && kind === 'layered' && coreTaken >= buildTotal;
+    secRead.style.display = secShown ? '' : 'none';
+    secRead.firstChild.textContent = secTaken === 0 ? 'security pass · owed ' : 'security pass · done ';
     firstOut.textContent = first ? String(first) : '—';
     unguardedOut.textContent = String(unguarded);
     flags.replaceChildren(
       h('span', null, 'complete features ', h('b', null, `${completeCols}/5`)),
-      h('span', null, 'steps taken ', h('b', null, `${step}`)),
+      h('span', null, 'steps taken ', h('b', null, `${coreTaken}`)),
       h('span', { class: first ? 'hot' : '' }, first ? `end-to-end reached at ${first}` : 'nothing works end to end yet'));
     mark('tried', '04');
     if (step >= total) mark('done', '04');
@@ -634,7 +648,7 @@ export function exp04() {
     no: '04', title: 'When does anything actually work?',
     line: 'Twenty cells, two build orders. Step through and watch the moment a feature becomes real.',
     stage,
-    detail: 'The manual’s numbers: layer by layer, the first working feature arrives at step 16 of 20; slice by slice, at step 4. This grid is 4 layers × 5 features, so both numbers fall out of the ordering — nothing is hard-coded except the shape. The security row shows the second half of the argument: when the check ships with the slice, no feature is ever live without it.',
+    detail: 'The manual’s numbers: layer by layer, the first working feature arrives at step 16 of 20; slice by slice, at step 4. This grid is 4 layers × 5 features, so both numbers fall out of the ordering — nothing is hard-coded except the shape. The denominator is the twenty cells in both orders; security work is counted separately, because in layer order it is a second pass after everything is live, and in slice order it ships inside the data cell. That row is the second half of the argument: when the check ships with the slice, no feature is ever live without it.',
   });
 
   view._destroy = () => { if (stop) stop(); };
